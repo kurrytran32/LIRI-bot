@@ -1,0 +1,26 @@
+{
+  "name": "LIRI-node-bot",
+  "version": "1.0.0",
+  "description": "Welcome to the bot that displays your latest tweets, get movie reviews and link up to spotify in one app!",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kurrytran32/LIRI-bot.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kurrytran32/LIRI-bot/issues"
+  },
+  "homepage": "https://github.com/kurrytran32/LIRI-bot#readme",
+  "dependencies": {
+    "dotenv": "^6.0.0",
+    "node-spotify-api": "^1.0.7",
+    "request": "^2.87.0",
+    "twitter": "^1.7.1"
+  }
+}
