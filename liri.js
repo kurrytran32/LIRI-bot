@@ -1,3 +1,4 @@
+// all of the requires for importing and npm packages
 require("dotenv").config();
 
 let keys = require('./keys')
@@ -5,43 +6,62 @@ var request = require('request');
 var Twitter = require('twitter');
 var Spotify = require('node-spotify-api');
 var fs = require("fs");
-
+// creating data for keys for spotify and twitter with constructor from keys.js
 let spotify = new Spotify(keys.spotify);
 let client = new Twitter(keys.twitter);
-
+// taking in the command from CLI
 let command = process.argv[2];
+// empty holding variable for 2+ word search items
 let look = "";
 // grabbing all values after process.argv[2]
 let nodeArgs = process.argv;
-for (let i = 3; i < nodeArgs.length; i++) {
-    if (i > 3 && i < nodeArgs.length) {
-        look = look + "+" + nodeArgs[i];
-    } else {
-        look += nodeArgs[i]
+function searchGrab() {
+    for (let i = 3; i < nodeArgs.length; i++) {
+        if (i > 3 && i < nodeArgs.length) {
+            look = look + "+" + nodeArgs[i];
+        } else {
+            look += nodeArgs[i]
+        }
     }
 }
-// switch case in for process.argv[2] 
-switch (command) {
-    case "my-tweets":
-        // function here
-        tweetGrabber();
-        break;
-    case 'spotify-this-song':
-        // function here
-        songSpot();
-        break;
-    case 'movie-this':
-        movieSearch();
-        break;
-    case 'do-what-it-says':
-        doIt()
-        break;
+// running the program with the switch cases
+liri(command, look);
+// function holding switch statement to define what is run with what keyword
+function liri() {
+    // switch case in for process.argv[2] 
+    switch (command) {
+        case "my-tweets":
+            // function here
+            tweetGrabber();
+            break;
+        case 'spotify-this-song':
+            // function here
+            if (look === "") {
+                defaultSong();
+            } else {
+                songSpot();
+            }
+            break;
+        case 'movie-this':
+            // function here
+            if (look === "") {
+                defaultMovie();
+            } else {
+                movieSearch();
+            }
 
-};
+            break;
+        case 'do-what-it-says':
+            // function here
+            doIt();
+            break;
+        default:
+            console.log('Wrong input');
+    };
+}
 
-//tweet grabber currently not working, might have to wait for account to refresh
 function tweetGrabber() {
-
+    // get function from twitter npm grabbing tweets
     client.get('search/tweets', { q: 'InStaKur', count: 20 }, function (error, tweets, response) {
         if (error) console.log(error);
         // console.log(tweets);
@@ -53,27 +73,22 @@ function tweetGrabber() {
 
 //function for spotify work
 function songSpot() {
-    let songParams = "";
-    // console.log(look);
-    if (!process.argv[3]) {
-        songParams = { type: 'track', query: 'The Sign', limit: 1 };
-    } else {
-        songParams = { type: 'track', query: look, limit: 1 };
-    }
+    //grabbing that multi word search
+    searchGrab();
+
+    let songParams = { type: 'track', query: look, limit: 1 };
     console.log(look);
-    
+
     spotify.search(songParams, function (err, data) {
         if (err) {
             return console.log('Error occurred: ' + err);
         }
-
-        // console.log(data);
         let albumShort = data.tracks.items[0].album;
         let albumName = data.tracks.items[0].album.name;
         let songName = data.tracks.items[0].name;
         let preview = data.tracks.items[0].external_urls.spotify;
         let bandArray = [];
-        // console.log(data.tracks.items[0].album.name)
+        // for loop for pushing multiple member artists
         for (let i = 0; i < albumShort.artists.length; i++) {
             let bandName = data.tracks.items[0].album.artists[i].name;
             bandArray.push(bandName);
@@ -86,13 +101,11 @@ function songSpot() {
 
 //OMDB SEARCH 
 function movieSearch() {
-    if(!nodeArgs[3]){
-        look = 'Mr.Nobody';
-        console.log(`If you haven't watched "Mr. Nobody," then you should: http://www.imdb.com/title/tt0485947/. \nIt's on Netflix!`)
-    }
+    //grabbing that multi word search
+    searchGrab();
+    
+    // query url for api use taking in variables
     var queryUrl = "https://www.omdbapi.com/?t=" + look + "&y=&plot=short&apikey=trilogy";
-
-    // console.log(queryUrl);
 
     request(queryUrl, function (error, response, body) {
 
@@ -105,13 +118,43 @@ function movieSearch() {
 
 }
 
-function doIt(){
-    fs.readFile('random.txt', 'utf8', function(error, data){
-        if(error) {
+function doIt() {
+    // reading the random text doc and grabbing the information and formatting to work with the main function containing switch statements
+    fs.readFile('random.txt', 'utf8', function (error, data) {
+        if (error) {
             return console.log(error)
         }
         console.log(data);
         let dataArr = data.split(',');
-        console.log(dataArr)
+
+        command = dataArr[0];
+        look = dataArr[1];
+        liri(command, look);
     })
+}
+
+//defaults
+function defaultSong() {
+    spotify.request('https://api.spotify.com/v1/tracks/3DYVWvPh3kGwPasp7yjahc').then(function(data){
+        console.log(data.name)
+        let songName = data.name;
+        let band = data.album.artists[0].name;
+        let albumName = data.album.name;
+        let preview = data.preview_url;
+        console.log(`Artist(s): ${band} \nSong Name: ${songName} \nLink: ${preview} \nAlbum: ${albumName}`);
+
+    })
+    
+}
+function defaultMovie() {
+    var queryUrl = "https://www.omdbapi.com/?t=Mr.Nobody&y=&plot=short&apikey=trilogy";
+    console.log(`If you haven't watched "Mr. Nobody," then you should: http://www.imdb.com/title/tt0485947/. \nIt's on Netflix!`)
+    request(queryUrl, function (error, response, body) {
+
+        // If the request is successful
+        if (!error && response.statusCode === 200) {
+
+            console.log(`Title: ${JSON.parse(body).Title} \nYear Released: ${JSON.parse(body).Year} \nIMDB Rating: ${JSON.parse(body).imdbRating} \nRotten Tomatoes: ${JSON.parse(body).Ratings[1].Value} \nCountry Produced: ${JSON.parse(body).Country} \nLanguage: ${JSON.parse(body).Language} \nShort Plot: ${JSON.parse(body).Plot} \nActors: ${JSON.parse(body).Actors}`);
+        }
+    });
 }
